@@ -3,98 +3,273 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dandy's World Draw Generator - Online Drawing Game</title>
-    <meta name="description" content="A fun online drawing game where you can create art using various shapes, body parts, and nature elements. Perfect for creative expression!">
+    <title>Dandy's World Draw Generator - Creative Online Drawing Game</title>
+    <meta name="description" content="Experience the joy of creative drawing with Dandy's World Draw Generator. Create artwork using shapes, body parts, and nature elements. Perfect for artists of all ages!">
+    <meta name="keywords" content="dandys world draw generator, online drawing game, creative drawing, digital art, drawing tools">
     <style>
-        * {
+        /* Modern CSS Reset */
+        *, *::before, *::after {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
 
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #f0f0f0;
+        /* Custom Properties */
+        :root {
+            --color-primary: #2563eb;
+            --color-secondary: #7c3aed;
+            --color-accent: #10b981;
+            --color-text: #1f2937;
+            --color-text-light: #6b7280;
+            --color-background: #ffffff;
+            --color-background-alt: #f3f4f6;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            color: var(--color-text);
+            line-height: 1.5;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 1.5rem;
+        }
+
+        h2 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            color: var(--color-primary);
+            margin-bottom: 2rem;
+        }
+
+        h3 {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            color: var(--color-secondary);
+            margin-bottom: 1rem;
+        }
+
+        /* Layout */
+        .section {
+            padding: 5rem 2rem;
         }
 
         .container {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
-        #gameFrame {
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            text-align: center;
+        }
+
+        .game-container {
+            margin: 2rem auto;
+            max-width: 1000px;
+            aspect-ratio: 16/9;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        .game-frame {
             width: 100%;
             height: 100%;
             border: none;
-            background: white;
         }
 
-        .loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            z-index: 1000;
-            transition: opacity 0.5s;
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
         }
 
-        .loading.hidden {
-            opacity: 0;
-            pointer-events: none;
+        .feature-card {
+            background: var(--color-background);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
         }
 
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+        .feature-card:hover {
+            transform: translateY(-5px);
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        /* Tools Section */
+        .tools-section {
+            background: var(--color-background-alt);
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* FAQ Section */
+        .faq-item {
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            background: var(--color-background);
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .faq-question {
+            font-weight: 600;
+            color: var(--color-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            color: white;
+            text-align: center;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: var(--color-accent);
+            color: white;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        .cta-button:hover {
+            background: #0ea5e9;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .section {
+                padding: 3rem 1rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <p>Loading Drawing Game...</p>
-    </div>
+    <!-- Hero Section -->
+    <section class="section hero">
+        <div class="container">
+            <h1>Dandy's World Draw Generator</h1>
+            <p class="hero-subtitle">Unleash your creativity with our intuitive online drawing tool</p>
+            <div class="game-container">
+                <iframe class="game-frame" src="game.html" title="Dandy's World Draw Generator Game"></iframe>
+            </div>
+        </div>
+    </section>
 
-    <div class="container">
-        <iframe id="gameFrame" 
-                src="game.html" 
-                title="Dandy's World Draw Generator Game"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen>
-        </iframe>
-    </div>
+    <!-- Features Section -->
+    <section class="section">
+        <div class="container">
+            <h2>Amazing Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>12 Vibrant Colors</h3>
+                    <p>Choose from a carefully selected palette of colors to bring your artwork to life.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Multiple Shapes</h3>
+                    <p>Access a variety of shapes including circles, squares, triangles, and more.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Body Parts Library</h3>
+                    <p>Create characters easily with pre-made body parts like eyes, hands, and faces.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Nature Elements</h3>
+                    <p>Add beautiful natural elements like leaves, flowers, and petals to your drawings.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How to Play Section -->
+    <section class="section tools-section">
+        <div class="container">
+            <h2>How to Play</h2>
+            <div class="tools-grid">
+                <div>
+                    <h3>1. Choose Your Tools</h3>
+                    <p>Select from various drawing tools, colors, and shapes in the toolbar.</p>
+                </div>
+                <div>
+                    <h3>2. Adjust Size</h3>
+                    <p>Use the size slider to control the thickness of lines and size of shapes.</p>
+                </div>
+                <div>
+                    <h3>3. Start Creating</h3>
+                    <p>Click and drag on the canvas to draw. For shapes, click and drag to resize.</p>
+                </div>
+                <div>
+                    <h3>4. Experiment</h3>
+                    <p>Mix different tools and shapes to create unique artwork.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="section">
+        <div class="container">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-list">
+                <div class="faq-item">
+                    <div class="faq-question">Is Dandy's World Draw Generator free to use?</div>
+                    <div class="faq-answer">Yes, it's completely free! Just open the website and start creating.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">Can I save my drawings?</div>
+                    <div class="faq-answer">Currently, you can take screenshots of your artwork. We're working on adding save functionality!</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">Does it work on mobile devices?</div>
+                    <div class="faq-answer">Yes, our drawing tool is fully responsive and works on all devices.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="section cta-section">
+        <div class="container">
+            <h2>Start Creating Today!</h2>
+            <p>Join thousands of artists and begin your creative journey with Dandy's World Draw Generator.</p>
+            <a href="#" class="cta-button" onclick="document.querySelector('.game-frame').scrollIntoView({behavior: 'smooth'})">
+                Start Drawing Now
+            </a>
+        </div>
+    </section>
 
     <script>
-        window.addEventListener('load', function() {
-            const loading = document.getElementById('loading');
-            const gameFrame = document.getElementById('gameFrame');
-
-            gameFrame.onload = function() {
-                setTimeout(() => {
-                    loading.classList.add('hidden');
-                }, 500);
-            };
+        // Add smooth scrolling for all links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
         });
     </script>
 </body>
