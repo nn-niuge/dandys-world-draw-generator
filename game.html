@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dandy's World Draw Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .toolbar {
+            width: 200px;
+            background: #f0f0f0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #canvas {
+            background: white;
+            cursor: crosshair;
+        }
+
+        .color-picker {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+        }
+
+        .color-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .shape-btn {
+            padding: 5px;
+            margin: 2px;
+            cursor: pointer;
+        }
+
+        .welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .welcome-screen h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .welcome-screen p {
+            margin-bottom: 15px;
+            max-width: 600px;
+            line-height: 1.6;
+        }
+
+        .start-btn {
+            padding: 10px 20px;
+            font-size: 18px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .start-btn:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-screen" id="welcomeScreen">
+        <h1>Welcome to Dandy's World Draw Generator</h1>
+        <p>Game Rules:</p>
+        <p>1. Choose from 12 different colors and adjust brush size to create your masterpiece</p>
+        <p>2. Use preset shapes like circles, squares, triangles, and ellipses</p>
+        <p>3. Add body parts like hands, feet, eyes, and nose to draw characters</p>
+        <p>4. Create nature elements with preset shapes for leaves, flowers, and petals</p>
+        <button class="start-btn" onclick="startGame()">Start Drawing!</button>
+    </div>
+
+    <div class="container">
+        <div class="toolbar">
+            <h3>Tools</h3>
+            <div>
+                <label>Brush Size:</label>
+                <input type="range" id="brushSize" min="1" max="50" value="5">
+            </div>
+            
+            <h3>Colors</h3>
+            <div class="color-picker" id="colorPicker"></div>
+            
+            <h3>Shapes</h3>
+            <div class="shapes">
+                <button class="shape-btn" onclick="selectShape('circle')">⭕ Circle</button>
+                <button class="shape-btn" onclick="selectShape('square')">⬜ Square</button>
+                <button class="shape-btn" onclick="selectShape('triangle')">△ Triangle</button>
+                <button class="shape-btn" onclick="selectShape('ellipse')">⬭ Ellipse</button>
+            </div>
+
+            <h3>Body Parts</h3>
+            <div class="shapes">
+                <button class="shape-btn" onclick="selectShape('hand')">✋ Hand</button>
+                <button class="shape-btn" onclick="selectShape('foot')">👣 Foot</button>
+                <button class="shape-btn" onclick="selectShape('eye')">👁 Eye</button>
+                <button class="shape-btn" onclick="selectShape('nose')">👃 Nose</button>
+            </div>
+
+            <h3>Nature</h3>
+            <div class="shapes">
+                <button class="shape-btn" onclick="selectShape('leaf')">🍃 Leaf</button>
+                <button class="shape-btn" onclick="selectShape('flower')">🌸 Flower</button>
+                <button class="shape-btn" onclick="selectShape('petal')">💮 Petal</button>
+            </div>
+
+            <button onclick="clearCanvas()" style="margin-top: 20px">Clear Canvas</button>
+        </div>
+        
+        <div class="main-area">
+            <canvas id="canvas"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const colors = [
+            '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF', '#FFFF00',
+            '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#008000', '#FFC0CB'
+        ];
+
+        let currentColor = '#000000';
+        let currentShape = 'freestyle';
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let startX = 0;
+        let startY = 0;
+        let tempCanvas = document.createElement('canvas');
+        let tempCtx = tempCanvas.getContext('2d');
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const colorPicker = document.getElementById('colorPicker');
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+        }
+
+        function initializeColors() {
+            colors.forEach(color => {
+                const btn = document.createElement('button');
+                btn.className = 'color-btn';
+                btn.style.backgroundColor = color;
+                btn.onclick = () => currentColor = color;
+                colorPicker.appendChild(btn);
+            });
+        }
+
+        function startGame() {
+            document.getElementById('welcomeScreen').style.display = 'none';
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            if (currentShape === 'freestyle') {
+                ctx.strokeStyle = currentColor;
+                ctx.lineWidth = document.getElementById('brushSize').value;
+                ctx.lineCap = 'round';
+                
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(e.offsetX, e.offsetY);
+                ctx.stroke();
+                [lastX, lastY] = [e.offsetX, e.offsetY];
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(tempCanvas, 0, 0);
+                const size = Math.sqrt(
+                    Math.pow(e.offsetX - startX, 2) + 
+                    Math.pow(e.offsetY - startY, 2)
+                );
+                drawShape(startX, startY, size);
+            }
+        }
+
+        function selectShape(shape) {
+            currentShape = shape;
+        }
+
+        function drawShape(x, y, size) {
+            ctx.fillStyle = currentColor;
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = Math.max(1, size / 10);
+
+            switch(currentShape) {
+                case 'circle':
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.stroke();
+                    break;
+                case 'square':
+                    ctx.strokeRect(x - size, y - size, size * 2, size * 2);
+                    break;
+                case 'triangle':
+                    ctx.beginPath();
+                    ctx.moveTo(x, y - size);
+                    ctx.lineTo(x + size, y + size);
+                    ctx.lineTo(x - size, y + size);
+                    ctx.closePath();
+                    ctx.stroke();
+                    break;
+                case 'ellipse':
+                    ctx.beginPath();
+                    ctx.ellipse(x, y, size * 1.5, size, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                    break;
+                case 'hand':
+                    drawHand(x, y, size);
+                    break;
+                case 'foot':
+                    drawFoot(x, y, size);
+                    break;
+                case 'eye':
+                    drawEye(x, y, size);
+                    break;
+                case 'nose':
+                    drawNose(x, y, size);
+                    break;
+                case 'leaf':
+                    drawLeaf(x, y, size);
+                    break;
+                case 'flower':
+                    drawFlower(x, y, size);
+                    break;
+                case 'petal':
+                    drawPetal(x, y, size);
+                    break;
+                case 'fan':
+                    drawFan(x, y, size);
+                    break;
+                case 'moon':
+                    drawMoon(x, y, size);
+                    break;
+                case 'head':
+                    drawHead(x, y, size);
+                    break;
+                case 'hair':
+                    drawHair(x, y, size);
+                    break;
+                case 'mouth':
+                    drawMouth(x, y, size);
+                    break;
+                case 'ear':
+                    drawEar(x, y, size);
+                    break;
+            }
+        }
+
+        function drawHand(x, y, size) {
+            ctx.beginPath();
+            ctx.ellipse(x, y, size * 1.2, size * 0.9, 0, 0, Math.PI * 2);
+            for(let i = 0; i < 5; i++) {
+                const angle = (i - 2) * 0.3;
+                const fingerLength = size * 1.2;
+                const fingerStart = size * 0.7;
+                ctx.moveTo(
+                    x + Math.cos(angle) * fingerStart, 
+                    y + Math.sin(angle) * fingerStart
+                );
+                ctx.lineTo(
+                    x + Math.cos(angle) * (fingerStart + fingerLength),
+                    y + Math.sin(angle) * (fingerStart + fingerLength)
+                );
+            }
+            ctx.stroke();
+        }
+
+        function drawFoot(x, y, size) {
+            ctx.beginPath();
+            ctx.moveTo(x - size * 0.5, y);
+            ctx.quadraticCurveTo(
+                x, y + size * 0.8,
+                x + size * 1.2, y
+            );
+            ctx.quadraticCurveTo(
+                x - size * 0.2, y - size * 0.2,
+                x - size * 0.5, y
+            );
+            ctx.stroke();
+            
+            for(let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                const toeX = x + size * 0.8 - (i * size * 0.25);
+                const toeY = y - size * 0.1 + (i * size * 0.08);
+                ctx.moveTo(toeX, toeY);
+                ctx.quadraticCurveTo(
+                    toeX + size * 0.15, toeY - size * 0.1,
+                    toeX + size * 0.3, toeY
+                );
+            }
+            ctx.stroke();
+        }
+
+        function drawEye(x, y, size) {
+            ctx.beginPath();
+            ctx.moveTo(x - size * 0.8, y);
+            ctx.quadraticCurveTo(
+                x, y - size * 0.5,
+                x + size * 0.8, y
+            );
+            ctx.quadraticCurveTo(
+                x, y + size * 0.3,
+                x - size * 0.8, y
+            );
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(x, y, size * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            for(let i = 0; i < 5; i++) {
+                const angle = -Math.PI / 3 + (i * Math.PI / 12);
+                const startX = x + Math.cos(angle) * size * 0.8;
+                const startY = y + Math.sin(angle) * size * 0.3;
+                ctx.beginPath();
+                ctx.moveTo(startX, startY - size * 0.1);
+                ctx.lineTo(startX + Math.cos(angle) * size * 0.2, 
+                          startY + Math.sin(angle) * size * 0.2);
+                ctx.stroke();
+            }
+        }
+
+        function drawNose(x, y, size) {
+            ctx.beginPath();
+            const s = size * 1.2;
+            ctx.moveTo(x - s * 0.3, y - s * 0.5);
+            ctx.quadraticCurveTo(x, y - s * 0.8, x + s * 0.3, y - s * 0.5);
+            ctx.quadraticCurveTo(x + s * 0.5, y, x, y + s * 0.5);
+            ctx.quadraticCurveTo(x - s * 0.5, y, x - s * 0.3, y - s * 0.5);
+            ctx.stroke();
+        }
+
+        function drawLeaf(x, y, size) {
+            ctx.beginPath();
+            const s = size * 1.5;
+            ctx.moveTo(x, y - s);
+            ctx.bezierCurveTo(
+                x + s, y - s * 0.5,
+                x + s, y + s * 0.5,
+                x, y + s
+            );
+            ctx.bezierCurveTo(
+                x - s, y + s * 0.5,
+                x - s, y - s * 0.5,
+                x, y - s
+            );
+            ctx.moveTo(x, y - s);
+            ctx.lineTo(x, y + s);
+            ctx.stroke();
+        }
+
+        function drawFlower(x, y, size) {
+            const s = size * 1.2;
+            for(let i = 0; i < 5; i++) {
+                const angle = (i * Math.PI * 2) / 5;
+                ctx.beginPath();
+                ctx.ellipse(
+                    x + Math.cos(angle) * s,
+                    y + Math.sin(angle) * s,
+                    s * 0.7,
+                    s * 0.3,
+                    angle,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.stroke();
+            }
+            ctx.beginPath();
+            ctx.arc(x, y, s * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawPetal(x, y, size) {
+            ctx.beginPath();
+            const s = size * 1.5;
+            ctx.moveTo(x, y - s);
+            ctx.bezierCurveTo(
+                x + s, y - s * 0.5,
+                x + s, y + s * 0.5,
+                x, y + s
+            );
+            ctx.bezierCurveTo(
+                x - s, y + s * 0.5,
+                x - s, y - s * 0.5,
+                x, y - s
+            );
+            ctx.stroke();
+        }
+
+        function drawFan(x, y, size) {
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.arc(x, y, size, -Math.PI / 6, Math.PI / 3, false);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            for(let i = 0; i <= 3; i++) {
+                const angle = -Math.PI / 6 + (i * Math.PI / 6);
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + Math.cos(angle) * size, y + Math.sin(angle) * size);
+                ctx.stroke();
+            }
+        }
+
+        function drawMoon(x, y, size) {
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2, false);
+            ctx.arc(x + size * 0.5, y, size * 0.8, 0, Math.PI * 2, true);
+            ctx.fill();
+        }
+
+        function drawHead(x, y, size) {
+            ctx.beginPath();
+            ctx.ellipse(x, y, size * 0.8, size, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x - size * 0.4, y + size * 0.3);
+            ctx.quadraticCurveTo(x, y + size * 0.8, x + size * 0.4, y + size * 0.3);
+            ctx.stroke();
+        }
+
+        function drawHair(x, y, size) {
+            for(let i = 0; i < 8; i++) {
+                ctx.beginPath();
+                const startX = x - size * 0.8 + (i * size * 0.2);
+                ctx.moveTo(startX, y - size * 0.5);
+                ctx.bezierCurveTo(
+                    startX - size * 0.2, y,
+                    startX + size * 0.2, y + size * 0.5,
+                    startX, y + size
+                );
+                ctx.stroke();
+            }
+        }
+
+        function drawMouth(x, y, size) {
+            ctx.beginPath();
+            ctx.moveTo(x - size * 0.4, y);
+            ctx.quadraticCurveTo(x, y - size * 0.2, x + size * 0.4, y);
+            ctx.moveTo(x - size * 0.4, y);
+            ctx.quadraticCurveTo(x, y + size * 0.3, x + size * 0.4, y);
+            ctx.stroke();
+        }
+
+        function drawEar(x, y, size) {
+            ctx.beginPath();
+            ctx.moveTo(x, y - size * 0.5);
+            ctx.quadraticCurveTo(
+                x + size * 0.8, y - size * 0.3,
+                x + size * 0.5, y + size * 0.5
+            );
+            ctx.quadraticCurveTo(
+                x + size * 0.2, y + size * 0.8,
+                x, y + size * 0.5
+            );
+            ctx.moveTo(x + size * 0.2, y - size * 0.2);
+            ctx.quadraticCurveTo(
+                x + size * 0.5, y,
+                x + size * 0.3, y + size * 0.3
+            );
+            ctx.stroke();
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            [startX, startY] = [e.offsetX, e.offsetY];
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+            
+            if (currentShape === 'freestyle') {
+                return;
+            }
+            tempCtx.clearRect(0, 0, canvas.width, canvas.height);
+            tempCtx.drawImage(canvas, 0, 0);
+        });
+
+        canvas.addEventListener('mousemove', draw);
+
+        canvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+            if (currentShape !== 'freestyle') {
+                tempCtx.clearRect(0, 0, canvas.width, canvas.height);
+                tempCtx.drawImage(canvas, 0, 0);
+            }
+        });
+
+        canvas.addEventListener('mouseout', () => {
+            isDrawing = false;
+            if (currentShape !== 'freestyle') {
+                tempCtx.clearRect(0, 0, canvas.width, canvas.height);
+                tempCtx.drawImage(canvas, 0, 0);
+            }
+        });
+
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Initialize
+        resizeCanvas();
+        initializeColors();
+
+        window.addEventListener('load', () => {
+            addNewShapeButtons();
+            addNewBodyPartButtons();
+        });
+
+        function addNewShapeButtons() {
+            const shapesDiv = document.querySelector('.shapes');
+            shapesDiv.innerHTML += `
+                <button class="shape-btn" onclick="selectShape('fan')">🌂 Fan</button>
+                <button class="shape-btn" onclick="selectShape('moon')">🌙 Moon</button>
+            `;
+        }
+
+        function addNewBodyPartButtons() {
+            const bodyPartsDiv = document.querySelector('.shapes:nth-of-type(2)');
+            bodyPartsDiv.innerHTML += `
+                <button class="shape-btn" onclick="selectShape('head')">👤 Head</button>
+                <button class="shape-btn" onclick="selectShape('hair')">💇 Hair</button>
+                <button class="shape-btn" onclick="selectShape('mouth')">👄 Mouth</button>
+                <button class="shape-btn" onclick="selectShape('ear')">👂 Ear</button>
+            `;
+        }
+    </script>
+</body>
+</html> 
